@@ -1147,5 +1147,3 @@ def make_example():
 
     # get the calculation going
     full_area_info, no_bad_contours = calculate_full_area(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image)
-
-make_example()
