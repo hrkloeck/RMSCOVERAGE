@@ -17,6 +17,7 @@ from skimage import measure
 from copy import copy,deepcopy
 from collections import OrderedDict
 
+
 def cal_imagepixval(axis,pixel,header):
     """
     Calculates the correct value of the pixel
@@ -62,12 +63,6 @@ def ellipse_RA_check(radec):
     Split the polygons into sub-polygons to be checked
     """
     new_polygons = []
-
-
-    #print(radec[:,0])
-    #fig, ax = plt.subplots()
-    #ax.scatter(radec[:,0],radec[:,1])
-    #plt.show()
 
 
     # check sources if they go over 360 degrees
@@ -825,7 +820,6 @@ def area_coverage(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image,
                     p_ra,p_dec = np.array(a).T
                     P_area = polygon_area_on_sphere(p_dec,p_ra, algorithm = 0, radius = None)
 
-
                     if print_total_area_info == True:
                         print('-- contour ',i,' area ',polygon_check[i],' ',P_area)
 
@@ -849,8 +843,21 @@ def area_coverage(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image,
             #
             # Do the plotting in pixel coordinates
             #
- 
+
             if doplot_pixel_image or doplot_to_check:
+
+                # Some settings for the latex interface
+                # https://github.com/matplotlib/matplotlib/issues/5860/
+                # https://stackoverflow.com/questions/72140681/matplotlib-set-up-font-computer-modern-and-bold
+                #
+                plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 14})
+                #plt.rc('text', usetex=True)
+                #plt.rcParams.update({'font.size': 14})
+                #plt.rcParams.update()
+                matplotlib.rc('text', usetex=True)
+                matplotlib.rc('legend', fontsize=14)
+                matplotlib.rcParams['text.latex.preamble'] = r'\boldmath'
+
 
                 # Display the image and plot all contours found
                 fig, ax = plt.subplots()
@@ -869,7 +876,7 @@ def area_coverage(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image,
 
                     if do_plot_cont_labels:
                         # do the labeling 
-                        ax.text(np.array(fcontours[i])[0, 1], np.array(fcontours[i])[0, 0],str(i),color='blue')
+                        ax.text(np.array(fcontours[i])[0, 1], np.array(fcontours[i])[0, 0],str(i),fontsize=10,color='orange')
 
 
                     if len(to_check_cont) > 0:
@@ -986,8 +993,7 @@ def calculate_full_area(fits_file_names,levels,doplot_pixel_image=False,pltsave_
     print_total_area_info    = False
     percentage_area          = 0.98
     do_plot_cont_labels      = True
-    DPI                      = 150
-
+    DPI                      = 300
 
     #
     # Here get the machinary started 
@@ -995,7 +1001,6 @@ def calculate_full_area(fits_file_names,levels,doplot_pixel_image=False,pltsave_
     tot_area, tot_area_levels,contours_to_check,full_info,full_info_contours_to_check  = area_coverage(fits_file_names,levels,doplot_pixel_image,\
                                                                                                        pltsave_pixel_image,doplot_world_contours,pltsave_world_contours,\
                                                                                                        print_total_area_info,percentage_area,do_plot_cont_labels,DPI)
-
 
 
     no_bad_contours = -1
@@ -1090,7 +1095,7 @@ def calculate_full_area(fits_file_names,levels,doplot_pixel_image=False,pltsave_
     return full_area_info, no_bad_contours
 
 
-def run_it():
+def make_example():
 
     #
     # Estimate the sky coverage 
@@ -1098,10 +1103,30 @@ def run_it():
     doplot_pixel_image  = False
     pltsave_pixel_image = False
     #
-    levels = np.logspace(-5,1,55)
+    levels = np.logspace(-5,1,55)[10:12]
     #
-    fits_file_names = ['J0001-1540_rms.fits','J0006+1728_rms.fits','J0126+1420_rms.fits','J0240+0957_rms.fits','J0249+0440_rms.fits',\
-                           'J0249-0759_rms.fits','J1133+0015_rms.fits','J1232-0224_rms.fits','J1312-2026_rms.fits','J2023-3655_rms.fits']
+    fits_file_names = ['J0006+1728_rms.fits']
+
+    # ==========================
+
+    # get the calculation going
+    full_area_info, no_bad_contours = calculate_full_area(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image)
+
+
+
+def calculate_survey_area(fits_file_names,levels,doplot_pixel_image=False,pltsave_pixel_image=False,doplot_area_p_level=False):
+
+    #
+    # Estimate the sky coverage 
+    #
+    # doplot_pixel_image  = False
+    # pltsave_pixel_image = False
+    # doplot_area_p_level = False
+    #
+    # levels = np.logspace(-5,1,55)
+    #
+    # fits_file_names = ['J0001-1540_rms.fits','J0006+1728_rms.fits','J0126+1420_rms.fits','J0240+0957_rms.fits','J0249+0440_rms.fits',\
+    #                      'J0249-0759_rms.fits','J1133+0015_rms.fits','J1232-0224_rms.fits','J1312-2026_rms.fits','J2023-3655_rms.fits']
 
     # ==========================
 
@@ -1113,37 +1138,30 @@ def run_it():
     if no_bad_contours == False:
         print('Need to check the levels someting went wrong')
 
+
+    tot_area_levels = []
+    tot_area        = []
+    tot_area_error  = []
+
+    for l in full_area_info:
+        tot_area_levels.append(l)
+        tot_area.append(full_area_info[l]['area'])
+        tot_area_error.append(full_area_info[l]['area_error'])
+
     # do the plotting
     #
-    doplot_area_p_level = True
     if doplot_area_p_level:
 
-        tot_area_levels = []
-        tot_area        = []
-
-        for l in full_area_info:
-            tot_area_levels.append(l)
-            tot_area.append(full_area_info[l]['area'])
         fig, ax = plt.subplots()
-        #ax.scatter(tot_area_levels,tot_area/max(tot_area))
-        ax.scatter(tot_area_levels,tot_area)
+        ax.errorbar(tot_area_levels,tot_area,yerr=tot_area_error,fmt='o')
         ax.set_xscale('log',base=10)
         plt.show()
 
+    return tot_area_levels, tot_area, tot_area_error
 
-def make_example():
 
-    #
-    # Estimate the sky coverage 
-    #
-    doplot_pixel_image  = True
-    pltsave_pixel_image = True
-    #
-    levels = np.logspace(-5,1,55)[10:20]
-    #
-    fits_file_names = ['J0006+1728_rms.fits']
 
-    # ==========================
-
-    # get the calculation going
-    full_area_info, no_bad_contours = calculate_full_area(fits_file_names,levels,doplot_pixel_image,pltsave_pixel_image)
+# comment out if you want to run the example
+#
+# make_example()
+#
